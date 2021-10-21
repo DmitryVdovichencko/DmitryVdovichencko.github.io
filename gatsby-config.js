@@ -7,8 +7,17 @@ module.exports = {
     "gatsby-plugin-image",
     "gatsby-plugin-react-helmet",
     "gatsby-plugin-mdx",
-    "gatsby-plugin-sharp",
-    "gatsby-transformer-sharp",
+    {
+      resolve: `gatsby-plugin-sharp`,
+      options: {
+        defaults: {
+          quality: 70,
+          formats: ['auto', 'webp', 'avif'],
+          placeholder: 'blurred',
+        },
+      },
+    },
+    `gatsby-transformer-sharp`,
 		"gatsby-plugin-postcss",
 		{
       resolve: `gatsby-plugin-typescript`,
@@ -33,6 +42,13 @@ module.exports = {
         path: "./src/pages/",
       },
       __key: "pages",
+    },
+		{
+      resolve: "gatsby-source-filesystem",
+      options: {
+        name: "articles",
+        path: `${__dirname}/content/articles/`,
+      },
     },
   ],
 };

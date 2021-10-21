@@ -15,7 +15,18 @@ module.exports = {
 			DEFAULT: {
 				css: {
 					color: theme('colors.gray.700'),
-					
+					code: {
+						background:theme('colors.gray.200'),
+						padding:theme('spacing.1'),
+						borderRadius:'2px',
+						color:theme('colors.gray.700'),
+						'&::before':{
+							content:'""!important'
+						},
+						'&::after':{
+							content:'""!important'
+						}
+					},
 					a: {
 						color: theme('colors.gray.700'),
 						textDecoration: 'none',
@@ -27,6 +38,9 @@ module.exports = {
 							fontWeight:700,
 						}
 					},
+					'article a':{
+						color: theme('colors.blue.500'),
+					}
 				},
 			},
 		})
