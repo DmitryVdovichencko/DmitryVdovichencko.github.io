@@ -22,17 +22,17 @@ const BlogPage = (props: BlogProps): React.ReactElement => {
       <p>Now go read something great. 🚀</p>
       {data.allMdx.edges.map(({ node }, index) => (
         <Link key={node.fields.slug} to={node.fields.slug}>
-          <div className="shadow flex my-4">
+          <div className="flex shadow-lg my-4 rounded-lg transition duration-500 ease-in-out hover:shadow-xl">
             <div className="flex-none w-48 relative">
               <GatsbyImage
                 alt={node.frontmatter.title}
-                className="absolute inset-0 w-full h-full object-cover mt-0"
+                className="absolute rounded-l-lg inset-0 w-full h-full object-cover mt-0 m-none"
                 image={getImage(node.frontmatter.cover)}
               />
             </div>
             <div className="flex-auto p-6">
               <h4 className="flex-auto text-xl font-semibold">{`${node.frontmatter.title}`}</h4>
-              <div className="w-full flex-none text-sm font-medium text-gray-500 mt-2">
+              <div className="w-full flex flex-row text-sm text-gray-500">
                 <AiOutlineCalendar size="18px" />
                 <span className="ml-1 text-sm -mb-0.5">
                   {isTitleCyrillic(node.frontmatter.title)
@@ -45,7 +45,7 @@ const BlogPage = (props: BlogProps): React.ReactElement => {
                   <Tag title={tag} />
                 ))}
               </div>
-              <div className="w-full flex-none text-sm font-medium text-gray-500 mt-2">
+              <div className="w-full flex-none text-sm text-gray-500 mt-2">
                 {node.excerpt}
               </div>
             </div>

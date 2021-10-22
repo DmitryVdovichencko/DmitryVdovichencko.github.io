@@ -27,6 +27,12 @@ module.exports = {
 							content:'""!important'
 						}
 					},
+					h4:{
+						marginTop:0
+					},
+					img:{
+						margin:0
+					},
 					a: {
 						color: theme('colors.gray.700'),
 						textDecoration: 'none',
