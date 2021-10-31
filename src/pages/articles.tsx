@@ -15,18 +15,13 @@ const BlogPage = (props: BlogProps): React.ReactElement => {
   const { data } = props;
   return (
     <Layout>
-      <p>
-        Welcome to articles section. In English and in Russian Languge as
-        well.✨
-      </p>
-      <p>Now go read something great. 🚀</p>
       {data.allMdx.edges.map(({ node }, index) => (
         <Link key={node.fields.slug} to={node.fields.slug}>
           <div className="flex shadow-lg my-4 rounded-lg transition duration-500 ease-in-out hover:shadow-xl">
-            <div className="flex-none w-48 relative">
+            <div className="flex-none md:w-48 relative">
               <GatsbyImage
                 alt={node.frontmatter.title}
-                className="absolute rounded-l-lg inset-0 w-full h-full object-cover mt-0 m-none"
+                className="absolute md:rounded-l-lg inset-0 w-full h-full object-cover mt-0 m-none"
                 image={getImage(node.frontmatter.cover)}
               />
             </div>

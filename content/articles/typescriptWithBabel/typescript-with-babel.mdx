@@ -1,12 +1,17 @@
 ---
 title: "Typescript и Babel: Счастливы Вместе" 
 date: "2020-10-04"
-cover: ./assets/ts.jpeg
+cover: ./assets/ts.jpg
+embeddedImagesLocal:
+- ./assets/ts.jpg
 tags: ["JavaScript","TypeScript", "Russian Translation"]
 ---
 
+import { getImage, GatsbyImage } from 'gatsby-plugin-image';
 
-# Typescript и Babel: "Счастливы Вместе" 👯 ❤️ 💞
+# Typescript и Babel: "Счастливы Вместе" 👯 ❤️
+
+<GatsbyImage alt="typescript" image={getImage(props.localImages[0])} />
 
 Перевод статьи [Matt Turnbull](https://iamturns.com/about/) [TypeScript With Babel: A Beautiful Marriage](https://iamturns.com/typescript-babel/)
 
