@@ -14,10 +14,12 @@ tags: ["JavaScript","Russian Translation"]
 ---
 
 import { getImage, GatsbyImage } from 'gatsby-plugin-image';
+import PostImage from '../../../components/ui/PostImage';
 
 # Разбираемся с атрибутом `SameSite` __cookies__ 
 
-<GatsbyImage alt="cookie-hero" image={getImage(props.localImages[0])} />
+<PostImage alt="cookie-hero" imageData={props.localImages[0]} />
+
 
 Перевод статьи [Rowan Merewood](https://web.dev/authors/rowan_m/) [SameSite cookies explained](https://web.dev/samesite-cookies-explained/?utm_source=devtools)
 
@@ -32,7 +34,7 @@ import { getImage, GatsbyImage } from 'gatsby-plugin-image';
 ```javascript
 Set-Cookie: promo_shown=1; Max-Age=2600000; Secure
 ```
-<GatsbyImage alt="set-cookie-response-header" image={getImage(props.localImages[6])} /> 
+<PostImage alt="set-cookie-response-header" imageData = {props.localImages[6]}>Сервер устанавливает cookies, используя заголовок Set-Cookie</PostImage> 
 
 Когда ваш посетитель откроет страницу, удовлетворяющую этим требованиям, т.е. соединение защищено и  `cookie` не старше месяца, браузер отправит этот заголовок в своем запросе: 
 
@@ -40,7 +42,8 @@ Set-Cookie: promo_shown=1; Max-Age=2600000; Secure
 Cookie: promo_shown=1
 ```
 
-<GatsbyImage alt="cookie-request-header" image={getImage(props.localImages[1])} /> 
+<PostImage alt="cookie-request-header" imageData={props.localImages[1]}>Ваш браузер отправляет cookies обратно в заголовке Cookie</PostImage>
+
 
 Вы также можете добавлять и смотреть `cookies` доступные на сайте используя `document.cookie`.
 Присваивание значения `document.cookie` создаст или перезапишет `cookie` с этим ключом. Например, попробуйте выполнить следующее в JavaScript консоли своего браузера: 
@@ -57,7 +60,7 @@ document.cookie;
 // "promo_shown=1; color_theme=peachpuff; sidebar_loc=left"
 ```
 
-<GatsbyImage alt="document-cookie" image={getImage(props.localImages[4])} /> 
+<PostImage alt="document-cookie" imageData = {props.localImages[4]}> JavaScript получает доступ к cookies с помощью document.cookie</PostImage>
 
 Если вы попробуете выполнить это на одном из популярных сайтов, то заметите, что большинство из них устанавливают значительно больше чем 3 `cookies`. Чаще всего, эти `cookies` отправляются в каждом запросе к домену, что приводит к ряду последствий. Обычно, для пользователей, ограничение исходящего трафика более строгое чем входящего. Так что, все излишние издержки на трафик исходящих запросов приводят к потерям в скорости. Будьте консервативными к числу и размеру `cookies`, которые вы устанавливаете. Используйте атрибут `Max-Age`, чтобы убедиться, что `cookies` не хранятся дольше чем необходимо.  
 
@@ -72,7 +75,7 @@ __Соответственно, `Cookies` домен которых отлича
 
 Эти определения не являются абсолютными, они зависят от окружения пользователя: один и тот же `cookie` может быть как основным так и сторонним в зависимости от сайта, на котором находится пользователь в текущий момент.
 
-<GatsbyImage alt="document-cookie" image={getImage(props.localImages[3])} /> 
+<PostImage alt="document-cookie" imageData = {props.localImages[3]}> Cookies могут приходить с множества разных доменов на одной странице.</PostImage>
 
 Продолжим с примером блога, допустим в одном из постов есть прикольная картинка с котэ и она хостится на `/blog/img/amazing-cat.png`. Поскольку картинка очень крутая, другой пользователь захотел использовать ее у себя на сайте. Если, пользователь уже посещал ваш блог, и у него есть `cookie` `promo-shown`, то когда он захочет посмотреть на картинку с котэ на другом сайте `cookie` будет прикреплен к запросу на получение картинки. Это определенно никому не нужно, т.к. `promo_shown` не используется на другом сайте, это излишняя нагрузка на запрос
 
@@ -80,7 +83,7 @@ __Соответственно, `Cookies` домен которых отлича
 состояние, когда они используются в стороннем контексте. Например, вы добавили видео с YouTube на своем сайте. В плеере, посетитель увидит кнопку "Посмотреть позже". Если ваш посетитель уже залогинен на YouTube, то его сессия доступна во встроенном плеере через сторонние `cookies`. Это значит, что кнопка "Посмотреть позже" просто сохранит видео, вместо запроса на логин или редиректа на YouTube.
 
 
-<GatsbyImage alt="cross-site-cookie-request-header" image={getImage(props.localImages[2])} /> 
+<PostImage alt="cross-site-cookie-request-header" imageData = {props.localImages[2]}>Сookie в стороннем контексте отправляются при посещении разных страниц.</PostImage>
  
 
 Одна из традиционных особенностей веба в том, что веб, по умолчанию, привык быть открытым. Поэтому, так много людей могут создавать приложения и размещать контент. Однако, эта особенность приводит к появлению ряда проблем в безопасности и приватности данных пользователя. Атаки фальсификации межсайтовых запросов (CSRF - Cross-Site Request Forgery) основаны на том факте, что `cookies` прикрепляются к каждому запросу, в независимости от того, кто является инициатором запроса. Например, если вы зашли на `evil.example`, то он может сделать запрос на `your-blog.example` и ваш браузер спокойненько прикрепит соответствующие `cookies`. И если ваш блог не заботится о проверке запросов то `evil.example` может спровоцировать действия типа удаления постов, или размещения собственного контента. 
@@ -135,7 +138,7 @@ __Предупреждение:__
 
 Наконец, есть вариант не определять значение, что подразумевает собой отправку `cookies` во всех контекстах. В последнем черновике спецификации RFC6265bis это можно сделать явно определив `SameSite=None`. Это означает что можно использовать `None` если вы намеренно хотите отправлять `cookies` сторонним сайтам.
 
-<GatsbyImage alt="samesite-none-lax-strict" image={getImage(props.localImages[5])} /> 
+<PostImage alt="samesite-none-lax-strict" imageData = {props.localImages[5]}>Определяйте контекст использования cookie явно, через: None, Lax, или Strict.</PostImage> 
 
 Если вы предоставляете сервис, которые другие сайты добавляют как виджет, встраиваемое содержимое, рекламу, или вам необходимо поддержка авторизации на разных сайтах, необходимо использовать `None`, чтобы ваши намерения были ясны.
 

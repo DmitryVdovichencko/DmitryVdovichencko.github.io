@@ -3,6 +3,7 @@ const { createFilePath } = require(`gatsby-source-filesystem`);
 const _ = require("lodash");
 const { createRemoteFileNode } = require("gatsby-source-filesystem");
 
+
 exports.createSchemaCustomization = ({ actions, schema }) => {
   const { createTypes, printTypeDefinitions } = actions;
 
@@ -78,6 +79,7 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
             }
             frontmatter {
               title
+							tags
             }
           }
         }
@@ -105,60 +107,28 @@ exports.createPages = async ({ graphql, actions, reporter }) => {
       context: { id: node.id },
     });
   });
+	const tagTemplate = path.resolve("src/templates/Tags.tsx")
+	    // Tag pages:
+    const tags = [
+      ...new Set(
+        posts.reduce(
+          (tagsList, edge) =>
+					_.get(edge, "node.frontmatter.tags")
+              ? [...tagsList, ..._.get(edge, "node.frontmatter.tags")]
+              : tagsList,
+          []
+        )
+      ),
+    ];
+    // Make tag pages
+    tags.forEach((tag) => {
+      createPage({
+        path: `/tags/${_.kebabCase(tag)}/`,
+        component: tagTemplate,
+        context: {
+          tag,
+        },
+      });
+    });
 };
-// exports.createPages = ({ graphql, actions }) => {
-//   const { createPage } = actions;
-//   return graphql(`
-//     {
-//       allMdx {
-//         edges {
-//           node {
-//             fields {
-//               slug
-//             }
-//             frontmatter {
-//               tags
-//             }
-//           }
-//         }
-//       }
-//     }
-//   `).then((result) => {
-//     const posts = result.data.allMdx.edges;
-//     const ArticleTemplate = path.resolve("src/templates/Article.tsx");
-//     const TagTemplate = path.resolve("src/templates/Tags.tsx");
-//     posts.forEach(({ node }) => {
-//       createPage({
-//         path: node.fields.slug,
-//         component: ArticleTemplate,
-//         context: {
-//           // Data passed to context is available
-//           // in page queries as GraphQL variables.
-//           slug: node.fields.slug,
-//         },
-//       });
-//     });
-//     // Tag pages:
-//     const tags = [
-//       ...new Set(
-//         posts.reduce(
-//           (tagsList, edge) =>
-// 					_.get(edge, "node.frontmatter.tags")
-//               ? [...tagsList, _.get(edge, "node.frontmatter.tags")]
-//               : tagsList,
-//           []
-//         )
-//       ),
-//     ];
-//     // Make tag pages
-//     tags.forEach((tag) => {
-//       createPage({
-//         path: `/tags/${_.kebabCase(tag)}/`,
-//         component: TagTemplate,
-//         context: {
-//           tag,
-//         },
-//       });
-//     });
-//   });
-// };
+
