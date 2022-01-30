@@ -10,13 +10,12 @@ const Tags = ({ pageContext, data }) => {
   const { edges, totalCount } = data.allMdx
   const tagHeader = `${totalCount} post${
     totalCount === 1 ? "" : "s"
-  } tagged with `
+  } tagged with ${tag}:`
 	const isTitleCyrillic = (title) => /[aА-яЯ]/gm.test(title);
   return (
     <Layout>
 			<div className="flex flex-row content-center text-gray-500" >
-				<div className="mr-2 align-middle">{tagHeader}</div>
-				<Tag title={tag} />
+				<span className="my-none vertical-middle">{tagHeader}</span>
 			</div>
 
       <div>

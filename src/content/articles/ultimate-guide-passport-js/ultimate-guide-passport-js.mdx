@@ -1,0 +1,784 @@
+---
+title: "Руководство по авторизации с Passport JS" 
+date: "2020-12-20"
+cover: ./assets/passport-js-course.png
+embeddedImagesLocal:
+- ./assets/auth-types.png
+- ./assets/passport-js-course.png
+tags: ["js","ru"]
+---
+import { getImage, GatsbyImage } from 'gatsby-plugin-image';
+import PostImage from '../../../components/ui/PostImage';
+
+# Руководство по авторизации с помощью Passport JS
+
+<PostImage  alt="passport-js-course" imageData={props.localImages[1]} />
+
+В этой статье, мы разберемся как работает JWT стратегия авторизации Passport JS. Эта стратегия - простое и безопасное решение для небольших проектов, работающих на связке Node/Express + фронтенд на любом из популярных JS фреймворков/библиотек (Angular, Vue, React).
+
+Чтобы определится с оптимальным решением, мы пробежимся по доступным механизмам авторизации.  разберемся как они работают, и как их реализовать в приложении (за исключением протокола OAuth, который здесь рассматриваться не будет). 
+
+Пост получился довольно детальным. Если вы уже знакомы с какой-либо темой смело переходите к тому, что вас интересует:
+
+- [Авторизация с помощью сессий]()
+- [Авторизация с помощью JWT]()
+
+Посмотреть на примеры приложений с реализациями способов авторизации можно здесь:
+
+- [Session Based Auth Repo](https://github.com/zachgoll/express-session-authentication-starter)
+- [JWT Auth Repo](https://github.com/zachgoll/express-jwt-authentication-starter)
+
+## Выбираем механизма авторизации
+
+<PostImage  alt="auth-types" imageData={props.localImages[0]} />
+
+Основные варианты дрступных механизмов авторизации:
+
+- __Session - Авторизация на основе сессии__ - Использует Cookies браузера совместно с сессиями ("Sessions") на бэкенде.
+
+- __JWT Авторизация__ - JSON Web token (JWT) записывается в браузере (обычно в localStorage). В JWT хранятся данные пользователя и они могут быть расшифрованы только с помощью секретного ключа, который хранится на сервере.
+
+- __OAuth и OpenID Connect Авторизация__ - Современный метод авторизации где приложения используют "подписи", сгенерированные другими приложениями для авторизации своих пользователей. Другими словами, это интегрированная авторизация где популярный сервис (например Google) реализует авторизацию и хранение данных пользователей, тогда как ваше приложение всего лишь его использует.
+Замечу, что Oauth довольно сложный механизм, и, поэтому, в этой статье мы его подробно не рассматриваем. Не только, потому что он излишен для небольших команд/стартапов запускающих приложение, но также, из-за того, что он сильно зависит от используемого сервиса (таких как Google, Facebook, Github, и т.д.).
+
+Ну и наконец, вы наверное заметили,что OAuth указан как "As a service" и "In house". Это сделано специально,чтобы отметить тот факт, что вообще-то есть компания называющаяся "OAuth", которая реализует OAuth протокол... как сервис - As a service. Но вы можете реализовать OAuth протокол без использования услуг компании "OAuth"!
+
+## Авторизация на основе сессии (Session Based Authentication)?
+
+Если бы мы делали родословную методов авторизации, авторизация на основе сессии была бы самой старшей, но, определенно не устаревшей. Этот метод авторизации "server-side" - Express приложение и база данных работают вместе, чтобы сохранить текущий статус авторизации каждого посетителя.
+
+Чтобы понять как работает авторизация на основе сессии, мы разберемся в следующих темах:
+
+- Основы заголовков протокола HTTP
+- Что такое cookie
+- Что такое сессия (session)
+- Как сессия session (на сервере) и cookie (в браузере) взаимодействуюи при авторизации пользователя
+
+/*Edited*/
+
+### HTTP Headers. Разбираемся с заголовками.
+
+Есть много способов сделать HTTP запрос через браузер. HTTP клиентом может быть веб приложение, IoT устройство, утилита командной строки (curl), и еще много чего. Каждый из этих клиентов подключен к интернету и делает HTTP запросы которые получают (GET), либо меняют данные (POST, PUT, DELETE, и т.д.).
+
+Попробуем разобраться на простом примере:
+
+Server = www.google.com Client = случайный чел в кофейне за ноутбуком
+
+Когда случайный чел из кофейни наберет www.google.com в своем браузере Google Chrome, этот запрос отправится с заголовками "HTTP Headers". Эти HTTP Headers являются парами ключ:значение и предоставлют дополнительную информацию, которая поможет браузеру сделать запрос. Этот запрос содержит два вида заголовков:
+
+- General Headers
+- Request Headers
+
+Чтобы посмотреть на них, откройте Google Chrome, перейдите в консоль разработчика developer tools, и кликните по вкладке "Network". Теперь, наберите www.google.com в адресной строке, и посмотрите как во вкладке Network загружаются разные ресурсы с сервера. Вы увидите разные колонки, такие как: Name, Status, Type, Initiator, Size, Time, и Waterfall. Найдите запрос у котрого в "Type" указано "document" и кликните по нему. Вы увидите заголовки запроса и ответ на запрос.
+
+Запрос который вы (в качестве клиента) сделали будет содержать приблизительно такие General и Request headers:
+
+```bash
+General Headers
+  Request URL: https://www.google.com/
+  Request Method: GET
+  Status Code: 200
+Request Headers
+  Accept: text/html
+  Accept-Language: en-US
+  Connection: keep-alive
+```
+
+Когда вы набрали www.google.com into в адресной строке и нажали enter, ваш HTTP запрос был отправлен с этими заголовками (и скорее всего еще с несколькими). Значения этих заголовков говорят сами за себя, поэтому пробежимся по некоторым, чтобы разобраться с их предназначением. Все, что непонятно, можно позже почитать на MDN.
+
+General headers могут содержать информацию данные request и response. Очевидно, Request URL и Request Method часть запроса request и они сообщают браузеру Google Chrome browser куда направить запрос. Status Code, соответственно, чать ответа response поскольку он сообщает о том,что GET запрос успешно завершился и вебстраничка www.google.com загружена.
+
+Request Headers содержат только заголовки из запроса request. О них можно думать как об "инструкциях для сервера". В этом случае, мой запрос request говорит серверу Google следующее:
+
+Хэй, Google Server, отправь-ка  мне HTML или text. Сейчас, у меня нет ни возможности, ни желания разбираться с чем-нибудь другим!
+Хэй, Google Server, и отправляй только слова на английском языке.
+И, да, Google Server, оставь соединение открытым, когда запрос будет завершен.
+Есть еще request headers которые можно установить, но эти - самые распространенные, их можно встретить в любом HTTP запросе.
+
+Так что, когда вы гуглите, вы отправляете запросы с заголовками серверу Google (для упрощения, будем считать у них один большой сервер). Сервер Google принимает запрос, читает "инструкции" (заголовки), и готовит ответ. Ответ содержит:
+
+- HTML data (то что вы увидите в браузере)
+- HTTP Headers
+
+Как вы уже догадались, "Response Headers" - те заголовки, что прислал нам сервер Google. Вот например:
+
+```bash
+Response Headers
+  Content-Length: 41485
+  Content-Type: text/html; charset=UTF-8
+  Set-Cookie: made_up_cookie_name=some value; expires=Thu, 28-Dec-2020 20:44:50 GMT;
+```
+
+Эти response headers довольно простые, за исключением заголовка Set-Cookie.
+
+Я добавил заголовок Set-Cookie, потому что это именно то что нам нужно, чтобы разобраться с авторизацией на основе сессии (Session based Authentication) а еще, это поможет с пониманием других методов авторизации далее.
+
+### Как работают Cookies
+
+Без Cookies в браузере, у нас есть проблема.
+
+Если у нас есть защищенная вебстраничка, на которую могут попасть только авторизованные пользователи, без cookies, им придется каждый раз авторизоваться заново при обноалении страницы! Это происходит потому, что изначально протокол HTTP "без памяти" - он не хранит состояние.
+
+Cookies представляют идею "хранения состояния" и позволяют браузеру "запомнить" ту информацию, что сервер прежде ему сообщал.
+
+Сервер Google может сообщить моему браузеру Google Chrome о том, что у меня есть доступ к защищенной странице, но, затем, если я обновлю страницу, и мой браузер "забудет" все, что было до этого, мне придется авторизоваться снова.
+
+Здесь на помощь приходят Cookies, и становится ясно зачем нужен заголовок Set-Cookie. В запросе выше, когда мы ввели www.google.com в нашем браузере и нажали enter, клиент отправил запрос с определенными заголовками, и сервер Google Server отправил ответ, прикрепив свои заголовки. Одним из заголовков ответа сервера был `Set-Cookie: made_up_cookie_name=some value; expires=Thu, 28-Dec-2020 20:44:50 GMT;`. Вот как сейчас выглядит взаимодействие клиента и сервера:
+
+Сервер: "Хэй клиент! Я хочу установить cookie с названием `made_up_cookie_name` и назаначить ему значение `some value`.
+
+Клиент: "Хей сервер, я установлю такой заголовок Cookie на все мои запросы к этому домену до 28 декабря, 2020!"
+
+Мы можем убедиться в этом используя консоль разработчика Google Chrome Developer Tools. Перейдите в "Application" => "Storage" и кликните на "Cookies". Теперь перейдите на сайт, который вы недавно посещали, и вы увидите какие cookies установлены для этого сайта. Для нашего выдуманного примера, вы бы увидели что-то вроде:
+
+```
+Name	Value	Expires / Max-Age
+madeupcookie_name	some value	2020-12-28T20:44:50.674Z
+```
+
+Этот cookie будет установлен в Cookie Request Header на все запросы к www.google.com до тех пор, пока не истечет срок действия cookie.
+
+Как вы уже поняли, это может очень помочь нам с авторизацией, если мы установим "авторизационный" cookie. Вот как это будет работать, если по-простому:
+
+Случайный чел из кофейни вводит www.example-site.com/login/ в браузере
+Случайный чел из кофейни заполняет форму авторизации, указав имя пользователя username и пароль password
+Браузер Google Chrome отправляет POST запрос с данными авторизации (username, password) на сервер www.example-site.com.
+Сервер www.example-site.com принимает данные авторизации, ищет в базе данных пользователя, сверяет пароль, если все ок, готовит ответ с заголовком `Set-Cookie: user_is_authenticated=true; expires=Thu, 1-Jan-2020 20:00:00 GMT`.
+Браузер случайного чела Google Chrome получает ответ и уставнавливает cookie  у себя:
+
+```
+Name	Value	Expires / Max-Age
+userisauthenticated	true	2020-12-28T20:44:50.674Z
+```
+Теперь случайный чел переходит на www.example-site.com/protected-route/
+Браузер готовит HTTP запрос с прикрепленным заголовком `Cookie: user_is_authenticated=true; expires=Thu, 1-Jan-2020 20:00:00 GMT`.
+Получив такой запрос, сервер увидит, что там есть cookie, "вспомнит" что был такой авторизованный юзер пару секунд назад, и разрешит ему посетить страницу.
+
+#### Ожидание и реальность
+
+Очевидно, то что я только что описал очень уязвимый способ авторизации. В реальности, сервер должен сделать хэш из пароля, который отправил пользователь, и проверять пароль нужно именно используя зашифрованный хэш.
+
+Ну что, мы разобрались с основами работы с cookies,и это позволит нам пойти дальше чтобы понять процесс авторизации.
+
+## Сессии
+Сессии и cookies, вообще-то довольно похожи, и можно легко запутаться, т.к. их беспрепятственно используют вместе. Главная разница между ними в том, где они хранятся.
+
+Другими словами, Cookie уставнавливает сервер, но записываются и хранятся они в браузере. Если бы сервер захотел использовать этот Cookie для записи "состояния" пользователя, все закончилось бы сложной схемой постоянного наблюдения за cookie в браузере. А выглядело бы это как-то так:
+
+Сервер: "Хей браузер, я только что авторизовал этого пользователя, запиши-ка cookie, чтобы я не забыл (Set-Cookie: user_auth=true; expires=Thu, 1-Jan-2020 20:00:00 GMT) в следующий раз когда ты что-нибудь попросишь"
+Браузер: "Спасибо сервер! Я прикреплю этот Cookie к заголовкам запросов request header"
+Браузер: "Хей сервер, могу я посмотреть на www.domain.com/protected? Вот cookie который ты мне отправлял в прошлый раз."
+Сервер: "Конечно можешь. Вот эта страничка. И, кстати я к ней прикреплю еще Set-Cookie header (Set-Cookie: marketing_page_visit_count=1; user_ip=192.1.234.21), поскольку моя компания хочет знать сколько народу и с каких компов зашло на эту страничку: для маркетинга."
+Браузер: Okay, добавлю этот cookie к заголовкам запросов request header
+Браузер: Хей сервер, можешь отправить мне содержимое www.domain.com/protected/special-offer? Вот все cookies, что ты мне отпралял до сих пор.(Cookie: user_auth=true; expires=Thu, 1-Jan-2020 20:00:00 GMT; marketing_page_visit_count=1; user_ip=192.1.234.21)
+Как вы уже поняли, чем больше страниц посещает браузер, тем больше cookies устанавливает сервер, и тем больше cookies браузер  будет прикреплять к каждому заголовку запроса request Header.
+
+Сервер в свою очередь должен уметь распарсить все cookies и предпринять определенные действия при отсутствии или наоборот присутствии некоторых cookie. И тут возникает вопрос... Почему бы серверу не хранить всю эту информацию в базе данных и использовать специальный "session ID" для идентификации действий пользователя?
+
+Для этого и нужны сессии. Как я заметил выше, главное различие cookie и сессии в том, где их хранят. Сессия хранится в Data Store (обычно база данных), тогда как Cookie - в браузере. Поскольку сессии харнятся на сервере, туда можно записывать конфиденциальную информацию. Хранить конфиденциальную инфу в cookie будет в высшей степени небезопасно.
+
+Теперь немного усложним задачу, и поговорим о том как использовать cookies и сессии вместе.
+
+Поскольку Cookies это способ обмена метаданными между клиентом и сервером (через HTTP Headers), сессия должна использовать cookies. Самый простой способ посмотреть как это работает - на примере приложения с авторизацией используя Node + Express + MongoDB. Я предполагаю что вы знакомы с базовыми принципами разработки приложений на Express, но постараюсь объяснять некоторые моменты по мере необходимости.
+
+Начнем с создания базового приложения и установки зависимостей:
+
+``` bash
+mkdir session-auth-app
+cd session-auth-app
+npm init -y
+npm install --save express mongoose dotenv connect-mongo express-session passport passport-local
+```
+
+Вот как будет выглядеть `app.js`. Рекомендую пробежаться по комментам, прежде чем читать дальше.
+
+```javascript
+const express = require("express");
+const mongoose = require("mongoose");
+const session = require("express-session");
+// Package documentation - https://www.npmjs.com/package/connect-mongo
+const MongoStore = require("connect-mongo")(session);
+/**
+ * -------------- ОБЩИЕ НАСТРОЙКИ ----------------
+ */
+// Получаем доступ к переменным окружения, указаным в .env файле с использованием синтакса `process.env.VARIABLE_NAME`
+require("dotenv").config();
+// Создаем приложение Express
+var app = express();
+// Миддлвары Express позволяющие парсить JSON и x-www-form-urlencoded в теле запроса
+// Они такие же как и `bodyParser` - скорее всего вы видели здесь bodyParser во многих приложениях
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+/**
+ * -------------- БАЗА ДАННЫХ ----------------
+ */
+/**
+ * Соединяемся с MongoDB Server используя параметр в `.env` файле. Не забудьте добавить строку
+ * в `.env` файл:
+ *
+ * DB_STRING=mongodb://<user>:<password>@localhost:27017/database_name
+ */
+const connection = mongoose.createConnection(process.env.DB_STRING);
+// Создаем простенькую схему User. hash и salt будут получены при регистрации юзера
+const UserSchema = new mongoose.Schema({
+  username: String,
+  hash: String,
+  salt: String,
+});
+// Определяем модель, которую будет использовать приложение
+mongoose.model("User", UserSchema);
+/**
+ * -------------- НАСТРОЙКА СЕССИИ ----------------
+ */
+/**
+ * MongoStore используется для хранения данных сессии. Подробнее об этом поговорим попозже.
+ *
+ * Заметьте `connection` для MongoStore тот же connection что мы использовали выше
+ */
+const sessionStore = new MongoStore({
+  mongooseConnection: connection,
+  collection: "sessions",
+});
+/**
+ * Документация по всем настройкам для сессий - https://www.npmjs.com/package/express-session
+ *
+ * Краткий обзор того что здесь (подробнее - дальше):
+ *
+ * secret: Случайная строка, используемая для "авторизации" сессии. На проде,
+ * неплохо было бы установить длинную рандомную строку
+ *
+ * resave: если установим true, то будем принудительно сохранять сессию, даже если ничего не менялось. Если его не установить,
+ * получим предупреждение в терминале
+ *
+ * saveUninitialized: похож на resave, если поставить true, то будем принудительно сохранять сессию, 
+ * даже если она не инициализировалась
+ */
+app.use(
+  session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: sessionStore,
+  })
+);
+/**
+ * -------------- РОУТЫ ----------------
+ */
+// Авторизация пользователя http://localhost:3000/login
+app.get("/login", (req, res, next) => {
+  res.send("<h1>Login Page</h1>");
+});
+app.post("/login", (req, res, next) => {});
+// Регистрация пользователя http://localhost:3000/register
+app.get("/register", (req, res, next) => {
+  res.send("<h1>Register Page</h1>");
+});
+app.post("/register", (req, res, next) => {});
+/**
+ * -------------- SERVER ----------------
+ */
+// Сервер запущен на http://localhost:3000
+app.listen(3000);
+```
+Сначала разберемся как `express-session` работает в этом приложении. Это "миддлвара" ("middleware"), специальный термин для функциии, которая что-либо меняет в нашем приложении.
+
+#### Краткий обзор по Express Middleware
+Например, у нас есть следующий код:
+
+```javascript
+const express = require("express");
+var app = express();
+// Специальная мидллвара
+function myMiddleware1(req, res, next) {
+  req.newProperty = "my custom property";
+  next();
+}
+// Еще одна специальная мидллвара
+function myMiddleware2(req, res, next) {
+  req.newProperty = "updated value";
+  next();
+}
+app.get("/", (req, res, next) => {
+  res.send(`<h1>Custom Property Value: ${req.newProperty}`);
+});
+// Сервер запущен на http://localhost:3000
+app.listen(3000);
+```
+
+Как видите, это достаточно простое Express приложение в котором есть две миддлвары и один роут, на который можно перейти в браузере по адресу [http://localhost:3000](http://localhost:3000). Если вы запустили приложение и попробовали перейти по адресу, вы увидите "Custom Property Value: undefined", потому что просто объявить виддлвару недостаточно.
+
+Мы должны объяснить приложению Express, что нужно использовать эти миддлвары. Мы можем сделать это несколькими способами. Сначала, сделаем это в роуте.
+
+```javascript
+app.get("/", myMiddleware1, (req, res, next) => {
+  res.send(`<h1>Custom Property Value: ${req.newProperty}`);
+});
+```
+
+Если передать первую миддлвару в качестве аргумента для роута вы увидите как "Custom Property Value: my custom property" отобразится в браузере. Что здесь произошло:
+
+- Приложение инициализировалось
+- Пользователь зашел на http://localhost:3000/ в браузере, что спровоцировало вызов функции `app.get()`.
+- Приложение Express сначала проверит есть ли какая-нибудь "глобальная" миддлвара для всех маршрутов, но ничего не найдет.
+- Приложение Express посмотрит на функцию `app.get()` и заметит, что установлена миддлвара перед вызовом колбэка. Приложение запустит миддлвару и передаст ей объекты `req`, `res`, и колбэк `next()`.
+The myMiddleware1 middleware first set req.newProperty, and then called next(), which tells the Express application "Go to the next middleware". If the middleware did not call next(), the browser would get "stuck" and not return anything.
+The Express app did not see any more middleware, so it continued with the request and sent the result.
+This is just one way to use middleware, and it is exactly how the passport.authenticate() function (more on this later, so keep in mind) works.
+
+Another way we can use middleware is by setting it "globally". Take a look at our app after this change:
+```javascript
+const express = require("express");
+var app = express();
+// Custom middleware
+function myMiddleware1(req, res, next) {
+  req.newProperty = "my custom property";
+  next();
+}
+// Another custom middleware
+function myMiddleware2(req, res, next) {
+  req.newProperty = "updated value";
+  next();
+}
+app.use(myMiddleware2);
+app.get("/", myMiddleware1, (req, res, next) => {
+  // Sends "Custom Property Value: my custom property
+  res.send(`<h1>Custom Property Value: ${req.newProperty}`);
+});
+// Server listens on http://localhost:3000
+app.listen(3000);
+With this app structure, you will notice that visiting http://localhost:3000/ in the browser still returns the same value as before. This is because the app.use(myMiddleware2) middleware is happening before the app.get('/', myMiddleware1). If we removed the middleware from the route, you will see the updated value in the browser.
+
+app.use(myMiddleware2);
+app.get("/", (req, res, next) => {
+  // Sends "Custom Property Value: updated value
+  res.send(`<h1>Custom Property Value: ${req.newProperty}`);
+});
+We could also get this result by placing the second middleware after the first within the route.
+
+app.get("/", myMiddleware1, myMiddleware2, (req, res, next) => {
+  // Sends "Custom Property Value: updated value
+  res.send(`<h1>Custom Property Value: ${req.newProperty}`);
+});
+```
+
+Although this is a quick and high-level overview of middleware in Express, it will help us understand what is going on with the express-session middleware.
+
+How Express Session Middleware works
+As I mentioned before, the express-session module gives us middleware that we can use in our application. The middleware is defined in this line:
+```javascript
+// Again, here is the documentation for this - https://www.npmjs.com/package/express-session
+app.use(
+  session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: sessionStore,
+  })
+);
+```
+
+Here is a brief overview of what the Express Session Middleware is doing:
+
+When a route is loaded, the middleware checks to see if there is a session established in the Session Store (MongoDB database in our case since we are using the connect-mongo custom Session Store).
+If there is a session, the middleware validates it cryptographically and then tells the Browser whether the session is valid or not. If it is valid, the Browser automatically attaches the connect.sid Cookie to the HTTP request.
+If there is no session, the middleware creates a new session, takes a cryptographic hash of the session, and stores that value in a Cookie called connect.sid. It then attaches the Set-Cookie HTTP header to the res object with the hashed value (Set-Cookie: connect.sid=hashed value).
+You might be wondering why this is useful at all, and how all this actually works.
+
+If you remember from the quick refresher on Express Middlewares, I said that a middleware has the ability to alter the req and res objects that are passed from one middleware to the next until it reaches the end of the HTTP request. Just like we set a custom property on the req object, we could also set something much more complex like a session object that has properties, methods, etc.
+
+That is exactly what the express-session middleware does. When a new session is created, the following properties are added to the req object:
+
+req.sessionID - A randomly generated UUID. You can define a custom function to generate this ID by setting the genid option. If you do not set this option, the default is to use the uid-safe module.
+
+```javascript
+app.use(
+  session({
+    genid: function (req) {
+      // Put your UUID implementation here
+    },
+  })
+);
+req.session - The Session object. This contains information about the session and is available for setting custom properties to use. For example, maybe you want to track how many times a particular page is loaded in a single session:
+app.get("/tracking-route", (req, res, next) => {
+  if (req.session.viewCount) {
+    req.session.viewCount = req.session.viewCount + 1;
+  } else {
+    req.session.viewCount = 1;
+  }
+  res.send("<p>View count is: " + req.session.viewCount + "</p>");
+});
+```
+
+req.session.cookie - The Cookie object. This defines the behaviour of the cookie that stores the hashed session ID in the browser. Remember, once the cookie has been set, the browser will attach it to every HTTP request automatically until it expires.
+How Passport JS Local Strategy works
+There is one last thing that we need to learn in order to fully understand Session Based Authentication--Passport JS.
+
+Passport JS has over 500 authentication "Strategies" that can be used within a Node/Express app. Many of these strategies are highly specific (i.e. passport-amazon allows you to authenticate into your app via Amazon credentials), but they all work similar within your Express app.
+
+In my opinion, the Passport module could use some work in the department of documentation. Not only does Passport consist of two modules (Passport base + Specific Strategy), but it is also a middleware, which as we saw is a bit confusing in its own right. To add to the confusion, the strategy that we are going to walk through (passport-local) is a middleware that modifies an object created by another middleware (express-session). Since the Passport documentation has little to say around how this all works, I will attempt to explain it to the best of my ability in this post.
+
+Let's first walk through the setup of the module.
+
+If you have been following along with this tutorial, you already have the modules needed. If not, you will need to install Passport and a Strategy to your project.
+```bash
+npm install --save passport passport-local
+```
+Once you have done that, you will need to implement Passport within your application. Below, I have added all the pieces you need for the passport-local strategy. I have removed comments to simplify. Take a quick read through the code and then we will walk through all of the // NEW code.
+```javascript
+const express = require("express");
+const mongoose = require("mongoose");
+const session = require("express-session");
+// NEW
+const passport = require("passport");
+const LocalStrategy = require("passport-local").Strategy;
+var crypto = require("crypto");
+// ---
+const MongoStore = require("connect-mongo")(session);
+require("dotenv").config();
+var app = express();
+const connection = mongoose.createConnection(process.env.DB_STRING);
+const UserSchema = new mongoose.Schema({
+  username: String,
+  hash: String,
+  salt: String,
+});
+mongoose.model("User", UserSchema);
+const sessionStore = new MongoStore({
+  mongooseConnection: connection,
+  collection: "sessions",
+});
+app.use(
+  session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    store: sessionStore,
+  })
+);
+// NEW
+// START PASSPORT
+function validPassword(password, hash, salt) {
+  var hashVerify = crypto
+    .pbkdf2Sync(password, salt, 10000, 64, "sha512")
+    .toString("hex");
+  return hash === hashVerify;
+}
+function genPassword(password) {
+  var salt = crypto.randomBytes(32).toString("hex");
+  var genHash = crypto
+    .pbkdf2Sync(password, salt, 10000, 64, "sha512")
+    .toString("hex");
+  return {
+    salt: salt,
+    hash: genHash,
+  };
+}
+passport.use(
+  new LocalStrategy(function (username, password, cb) {
+    User.findOne({ username: username })
+      .then((user) => {
+        if (!user) {
+          return cb(null, false);
+        }
+        // Function defined at bottom of app.js
+        const isValid = validPassword(password, user.hash, user.salt);
+        if (isValid) {
+          return cb(null, user);
+        } else {
+          return cb(null, false);
+        }
+      })
+      .catch((err) => {
+        cb(err);
+      });
+  })
+);
+passport.serializeUser(function (user, cb) {
+  cb(null, user.id);
+});
+passport.deserializeUser(function (id, cb) {
+  User.findById(id, function (err, user) {
+    if (err) {
+      return cb(err);
+    }
+    cb(null, user);
+  });
+});
+app.use(passport.initialize());
+app.use(passport.session());
+// ---
+// END PASSPORT
+app.get("/login", (req, res, next) => {
+  res.send("<h1>Login Page</h1>");
+});
+app.post("/login", (req, res, next) => {});
+app.get("/register", (req, res, next) => {
+  res.send("<h1>Register Page</h1>");
+});
+app.post("/register", (req, res, next) => {});
+app.listen(3000);
+```
+Yes, I know there is a lot to take in here. Let's start with the easy parts--the helper functions. In the code above, I have two helper functions that will assist in creating and validating a password.
+```javascript
+/**
+ *
+ * @param {*} password - The plain text password
+ * @param {*} hash - The hash stored in the database
+ * @param {*} salt - The salt stored in the database
+ *
+ * This function uses the crypto library to decrypt the hash using the salt and then compares
+ * the decrypted hash/salt with the password that the user provided at login
+ */
+function validPassword(password, hash, salt) {
+  var hashVerify = crypto
+    .pbkdf2Sync(password, salt, 10000, 64, "sha512")
+    .toString("hex");
+  return hash === hashVerify;
+}
+/**
+ *
+ * @param {*} password - The password string that the user inputs to the password field in the register form
+ *
+ * This function takes a plain text password and creates a salt and hash out of it.  Instead of storing the plaintext
+ * password in the database, the salt and hash are stored for security
+ *
+ * ALTERNATIVE: It would also be acceptable to just use a hashing algorithm to make a hash of the plain text password.
+ * You would then store the hashed password in the database and then re-hash it to verify later (similar to what we do here)
+ */
+function genPassword(password) {
+  var salt = crypto.randomBytes(32).toString("hex");
+  var genHash = crypto
+    .pbkdf2Sync(password, salt, 10000, 64, "sha512")
+    .toString("hex");
+  return {
+    salt: salt,
+    hash: genHash,
+  };
+}
+```
+In addition to the comments, I'll note that these functions require the NodeJS built-in crypto library. Some would argue a better crypto library, but unless your application requires a high degree of security, this library is plenty sufficient!
+
+Next up, let's take a look at the passport.use() method.
+```javascript
+/**
+ * This function is called when the `passport.authenticate()` method is called.
+ *
+ * If a user is found an validated, a callback is called (`cb(null, user)`) with the user
+ * object.  The user object is then serialized with `passport.serializeUser()` and added to the
+ * `req.session.passport` object.
+ */
+passport.use(
+  new LocalStrategy(function (username, password, cb) {
+    User.findOne({ username: username })
+      .then((user) => {
+        if (!user) {
+          return cb(null, false);
+        }
+        // Function defined at bottom of app.js
+        const isValid = validPassword(password, user.hash, user.salt);
+        if (isValid) {
+          return cb(null, user);
+        } else {
+          return cb(null, false);
+        }
+      })
+      .catch((err) => {
+        cb(err);
+      });
+  })
+);
+```
+I know the above function is quite a lot to look at, so let's explore some of its key components. First, I'll mention that with all Passport JS authentication strategies (not just the local strategy we are using), you will need to supply it with a callback that will be executed when you call the passport.authenticate() method. For example, you might have a login route in your app:
+```javascript
+app.post(
+  "/login",
+  passport.authenticate("local", { failureRedirect: "/login" }),
+  (err, req, res, next) => {
+    if (err) next(err);
+    console.log("You are logged in!");
+  }
+);
+```
+Your user will type in their username and password via a login form, which will create an HTTP POST request to the /login route. Let's say your post request contained the following data:
+```javascript
+{
+  "email": "sample@email.com",
+  "pw": "sample password"
+}
+```
+This WILL NOT WORK. The reason? Because the passport.use() method expects your POST request to have the following fields:
+```javascript
+{
+  "username": "sample@email.com",
+  "password": "sample password"
+}
+```
+It looks for username and password field. If you wanted the first json request body to work, you would need to supply the passport.use() function with field definitions:
+```javascript
+passport.use(
+  {
+    usernameField: "email",
+    passwordField: "pw",
+  },
+  function (email, password, callback) {
+    // Implement your callback function here
+  }
+);
+```
+By defining the usernameField and passwordField, you can specify a custom POST request body object.
+
+That aside, let's return to the POST request at the /login route:
+```javascript
+app.post(
+  "/login",
+  passport.authenticate("local", { failureRedirect: "/login" }),
+  (err, req, res, next) => {
+    if (err) next(err);
+    console.log("You are logged in!");
+  }
+);
+```
+When the user submits his/her login credentials, the passport.authenticate() method (used as middleware here) will execute the callback that you have defined and supply it with the username and password from the POST request body. The passport.authenticate() method takes two parameters--the name of the strategy, and options. The default strategy name here is local, but you could change this like so:
+```javascript
+// Supply a name string as the first argument to the passport.use() function
+passport.use("custom-name", new Strategy());
+// Use the same name as above
+app.post(
+  "/login",
+  passport.authenticate("custom-name", { failureRedirect: "/login" }),
+  (err, req, res, next) => {
+    if (err) next(err);
+    console.log("You are logged in!");
+  }
+);
+```
+The way I have used the passport.authenticate() strategy will first execute the callback function that we defined within new LocalStrategy(), and if the authentication is successful, it will call the next() function, and we will enter the route. If authentication was not successful (invalid username or password), the app will redirect to the /login route again.
+
+Now that we understand how it is used, let's return to the callback function that we defined earlier and that passport.authenticate() is using.
+```javascript
+// Tells Passport to use this strategy for the passport.authenticate() method
+passport.use(
+  new LocalStrategy(
+    // Here is the function that is supplied with the username and password field from the login POST request
+    function (username, password, cb) {
+      // Search the MongoDB database for the user with the supplied username
+      User.findOne({ username: username })
+        .then((user) => {
+          /**
+           * The callback function expects two values:
+           *
+           * 1. Err
+           * 2. User
+           *
+           * If we don't find a user in the database, that doesn't mean there is an application error,
+           * so we use `null` for the error value, and `false` for the user value
+           */
+          if (!user) {
+            return cb(null, false);
+          }
+          /**
+           * Since the function hasn't returned, we know that we have a valid `user` object.  We then
+           * validate the `user` object `hash` and `salt` fields with the supplied password using our
+           * utility function.  If they match, the `isValid` variable equals True.
+           */
+          const isValid = validPassword(password, user.hash, user.salt);
+          if (isValid) {
+            // Since we have a valid user, we want to return no err and the user object
+            return cb(null, user);
+          } else {
+            // Since we have an invalid user, we want to return no err and no user
+            return cb(null, false);
+          }
+        })
+        .catch((err) => {
+          // This is an application error, so we need to populate the callback `err` field with it
+          cb(err);
+        });
+    }
+  )
+);
+```
+I have commented the above in great detail, so be sure to read through before moving on.
+
+As you may notice, the callback function is database agnostic and validation agnostic. In other words, we don't need to use MongoDB nor do we need to validate our passwords in the same way. PassportJS leaves this up to us! This can be confusing, but is also extremely powerful and is why PassportJS has such widespread adoption.
+
+Next, you'll see two related functions:
+```javascript
+passport.serializeUser(function (user, cb) {
+  cb(null, user.id);
+});
+passport.deserializeUser(function (id, cb) {
+  User.findById(id, function (err, user) {
+    if (err) {
+      return cb(err);
+    }
+    cb(null, user);
+  });
+});
+```
+Personally, I found these two functions to be the most confusing because there is not a lot of documentation around them. We will further explore what these functions are doing when we talk about how PassportJS and Express Session middleware interact, but in short, these two functions are responsible for "serializing" and "deserializing" users to and from the current session object.
+
+Instead of storing the entire user object in the session, we only need to store the database ID for the user. When we need to get more information about the user in the current session, we can use the deserialize function to look the user up in the database using the ID that was stored in the session. Again, we will make more sense of this soon.
+
+Finally, with the Passport implementation, you will see two more lines of code:
+```javascript
+app.use(passport.initialize());
+app.use(passport.session());
+```
+If you remember from earlier in the post on how middleware works, by calling app.use(), we are telling Express to execute the functions within the parentheses in order on every request.
+
+In other words, for every HTTP request our Express app makes, it will execute passport.initialize() and passport.session().
+
+Something seem weird here??
+
+If app.use() executes the function contained within, then the above syntax is like saying:
+```javascript
+passport.initialize()();
+passport.session()();
+```
+The reason this works is because these two functions actually return another function! Kind of like this:
+```javascript
+Passport.prototype.initialize = function () {
+  // Does something
+  return function () {
+    // This is what is called by `app.use()`
+  };
+};
+```
+This is not necessary to know to use Passport, but definitely clears up some confusion if you were wondering about that syntax.
+
+Anyways...
+
+These two middleware functions are necessary for integrating PassportJS with express-session middleware. That is why these two functions must come AFTER the app.use(session({})) middleware! Just like passport.serializeUser() and passport.deserializeUser(), these middlewares will make much more sense shortly.
+
+Conceptual Overview of Session Based Authentication
+Now that we understand HTTP Headers, Cookies, Middleware, Express Session middleware, and Passport JS middleware, it is finally time to learn how to use these to authenticate users into our application. I want to first use this section to review and explain the conceptual flow, and then dive into the implementation in the next section.
+
+Here is a basic flow of our app:
+
+Express app starts and listens on http://www.expressapp.com (just assume this is true for the sake of the example).
+A user visits http://www.expressapp.com/login in the browser
+The express-session middleware realizes that there is a user connecting to the Express server. It checks the Cookie HTTP header on the req object. Since this user is visiting for the first time, there is no value in the Cookie header. Because there is no Cookie value, the Express server returns the /login HTML and calls the Set-Cookie HTTP header. The Set-Cookie value is the cookie string generated by express-session middleware according to the options set by the developer (assume in this case the maxAge value is 10 days).
+The user realizes that he doesn't want to login right now, but instead, wants to go for a walk. He closes his browser.
+The user returns from his walk, opens the browser, and returns to http://www.expressapp.com/login again.
+Again, the express-session middleware runs on the GET request, checks the Cookie HTTP header, but this time, finds a value! This is because the user had previously created a session earlier that day. Since the maxAge option was set to 10 days on the express-session middleware, closing the browser does not destroy the cookie.
+The express-session middleware now takes the connect.sid value from the Cookie HTTP header, looks it up in the MongoStore (fancy way to say that it looks up the id in the database in the sessions collection), and finds it. Since the session exists, the express-session middleware does not do anything, and both the Cookie HTTP header value and the MongoStore database entry in the sessions collection stays the same.
+Now, the user types in his username and password and presses the "Login" button.
+By pressing the "Login" button, the user sends a POST request to the /login route, which uses the passport.authenticate() middleware.
+On every request so far, the passport.initialize() and passport.session() middlewares have been running. On each request, these middlewares are checking the req.session object (created by the express-session middleware) for a property called passport.user (i.e. req.session.passport.user). Since the passport.authenticate() method had not been called yet, the req.session object did not have a passport property. Now that the passport.authenticate() method has been called via the POST request to /login, Passport will execute our user-defined authentication callback using the username and password our user typed in and submitted.
+We will assume that the user was already registered in the database and typed in the correct credentials. The Passport callback validates the user successfully.
+The passport.authenticate() method now returns the user object that was validated. In addition, it attaches the req.session.passport property to the req.session object, serializes the user via passport.serializeUser(), and attaches the serialized user (i.e. the ID of the user) to the req.session.passport.user property. Finally, it attaches the full user object to req.user.
+The user turns off his computer and goes for another walk because our application is boring.
+The user turns on his computer the next day and visits a protected route on our application.
+The express-session middleware checks the Cookie HTTP header on req, finds the session from yesterday (still valid since our maxAge was set to 10 days), looks it up in MongoStore, finds it, and does nothing to the Cookie since the session is still valid. The middleware re-initializes the req.session object and sets to the value returned from MongoStore.
+The passport.initialize() middleware checks the req.session.passport property and sees that there is still a user value there. The passport.session() middleware uses the user property found on req.session.passport.user to re-initialize the req.user object to equal the user attached to the session via the passport.deserializeUser() function.
+The protected route looks to see if req.session.passport.user exists. Since the Passport middleware just re-initialized it, it does, and the protected route allows the user access.
+The user leaves his computer for 2 months.
+The user comes back and visits the same protected route (hint: the session has expired!)
+The express-session middleware runs, realizes that the value of the Cookie HTTP header has an expired cookie value, and replaces the Cookie value with a new Session via the Set-Cookie HTTP header attached to the res object.
+The passport.initialize() and passport.session() middlewares run, but this time, since express-session middleware had to create a new session, there is no longer a req.session.passport object!
+Since the user did not log in and is trying to access a protected route, the route will check if req.session.passport.user exists. Since it doesn't, access is denied!
+Once the user logs in again and triggers the passport.authenticate() middleware, the req.session.passport object will be re-established, and the user will again be able to visit protected routes.
+Phewwww....
+
+Got all that?
