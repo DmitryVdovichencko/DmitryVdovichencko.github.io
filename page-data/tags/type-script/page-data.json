@@ -2,4 +2,4 @@
     "componentChunkName": "component---src-templates-tags-tsx",
     "path": "/tags/type-script/",
     "result": {"data":{"allMdx":{"totalCount":1,"edges":[{"node":{"fields":{"slug":"/typescriptWithBabel/typescript-with-babel/"},"frontmatter":{"title":"Typescript и Babel: Счастливы Вместе","dateRu":"04 октября, 2020","dateEn":"04 October, 2020","tags":["JavaScript","TypeScript","Russian Translation"]},"excerpt":"Typescript и Babel: \"Счастливы Вместе\" 👯 ❤️ Перевод статьи  Matt Turnbull   TypeScript With Babel: A Beautiful Marriage Использовать…"}}]}},"pageContext":{"tag":"TypeScript"}},
-    "staticQueryHashes": []}
+    "staticQueryHashes": ["4202924991"]}

@@ -2,4 +2,4 @@
     "componentChunkName": "component---src-pages-tags-tsx",
     "path": "/tags/",
     "result": {"data":{"allMdx":{"group":[{"fieldValue":"JavaScript","totalCount":2},{"fieldValue":"Russian Translation","totalCount":2},{"fieldValue":"TypeScript","totalCount":1}]}},"pageContext":{}},
-    "staticQueryHashes": []}
+    "staticQueryHashes": ["4202924991"]}
