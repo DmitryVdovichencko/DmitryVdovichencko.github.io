@@ -45,7 +45,7 @@ const ProjectsPage: React.FC<ProjectsData> = (props) => {
                 <div className="flex flex-row flex-wrap items-baseline mt-4 mb-6">
                   {tags?.map((tag) => (
                     <div
-                      className="mx-0.5 rounded bg-slate-200 py-1 px-2 text-stone-600 font-light"
+                      className="mr-1 rounded bg-slate-200 py-1 px-2 text-stone-600 font-light text-sm"
                       key={tag}
                     >
                       {tag}
@@ -54,7 +54,7 @@ const ProjectsPage: React.FC<ProjectsData> = (props) => {
                 </div>
                 <CardDescription>{description}</CardDescription>
 
-                <div className="flex flex-row flex-wrap w-full justify-start items-end p-2">
+                <div className="flex flex-row flex-wrap w-full justify-start items-end py-2">
                   {srcUrl && (
                     <LinkButton
                       href={srcUrl}
