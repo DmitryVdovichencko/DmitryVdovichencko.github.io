@@ -1,10 +1,5 @@
 import * as React from "react";
-import {
-  AiOutlineGithub,
-  AiOutlineTwitter,
-  AiFillLinkedin,
-	AiOutlineCaretRight
-} from "react-icons/ai";
+import { AiOutlineGithub, AiOutlineCaretRight } from "react-icons/ai";
 import { PageProps, graphql } from "gatsby";
 import Layout from "../components/layout/";
 import {
@@ -13,12 +8,26 @@ import {
   CardDescription,
   CardHeader,
   CardImage,
-  CardStaticImage,
 } from "../components/ui/Card";
 import { projects } from "../content/projects/projects";
-import LinkButton from "../components/ui/LinkButton"
+import LinkButton from "../components/ui/LinkButton";
+import { IGatsbyImageData } from "gatsby-plugin-image";
+interface ImageData {
+  fixed: {
+    originalName: string;
+  };
+  gatsbyImageData: IGatsbyImageData;
+}
 
-const ProjectsPage: React.FC<PageProps> = (props) => {
+interface ProjectsData extends PageProps {
+  data: {
+    allImageSharp: {
+      nodes: Array<ImageData>;
+    };
+  };
+}
+
+const ProjectsPage: React.FC<ProjectsData> = (props) => {
   const { data } = props;
   return (
     <Layout>
@@ -27,7 +36,6 @@ const ProjectsPage: React.FC<PageProps> = (props) => {
           const image = data?.allImageSharp?.nodes?.filter(
             (img) => img?.fixed?.originalName === cover
           )[0];
-          console.log({ image });
           return (
             <Card key={`${title}_${index}`}>
               <CardImage title={title} data={image?.gatsbyImageData} />
@@ -36,17 +44,30 @@ const ProjectsPage: React.FC<PageProps> = (props) => {
                 <CardHeader title={title} />
                 <div className="flex flex-row flex-wrap items-baseline mt-4 mb-6">
                   {tags?.map((tag) => (
-                    <div key={tag}>{tag}</div>
+                    <div
+                      className="mx-0.5 rounded bg-slate-200 py-1 px-2 text-stone-600 font-light"
+                      key={tag}
+                    >
+                      {tag}
+                    </div>
                   ))}
                 </div>
                 <CardDescription>{description}</CardDescription>
 
                 <div className="flex flex-row flex-wrap w-full justify-start items-end p-2">
                   {srcUrl && (
-										<LinkButton href={srcUrl} title="Repository" icon={<AiOutlineGithub size="1.5em" />} />
+                    <LinkButton
+                      href={srcUrl}
+                      title="Repository"
+                      icon={<AiOutlineGithub size="1.5em" />}
+                    />
                   )}
                   {demoUrl && (
-										<LinkButton href={demoUrl} title="Demo" icon={<AiOutlineCaretRight size="1.5em" />} />
+                    <LinkButton
+                      href={demoUrl}
+                      title="Demo"
+                      icon={<AiOutlineCaretRight size="1.5em" />}
+                    />
                   )}
                 </div>
               </CardContent>

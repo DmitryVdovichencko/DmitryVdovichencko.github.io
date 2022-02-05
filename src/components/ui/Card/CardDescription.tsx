@@ -8,7 +8,7 @@ const CardDescription = ({
   children = null,
 }: CardDescriptionProps): React.ReactElement => {
   return (
-		<div className="w-full flex-none text-sm text-gray-500 mt-2">
+		<div className="w-full flex-none text-sm text-gray-500 font-light mt-2">
       {children}
     </div>
   );

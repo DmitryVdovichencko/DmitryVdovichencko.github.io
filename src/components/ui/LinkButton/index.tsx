@@ -1,7 +1,7 @@
 import React from "react";
 
 interface LinkButtonProps {
-  icon: React.Component;
+  icon: React.ReactNode;
   href: string;
   title: string;
 }
