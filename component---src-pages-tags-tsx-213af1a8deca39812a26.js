@@ -1,0 +1,2 @@
+"use strict";(self.webpackChunkdimetrio_dev=self.webpackChunkdimetrio_dev||[]).push([[190],{1938:function(e,t,a){a.r(t);var n=a(1804),l=a.n(n),r=a(7294),u=a(5444),i=a(8851);t.default=function(e){var t=e.data.allMdx.group;return r.createElement(i.Z,null,t.map((function(e,t){return r.createElement("div",{key:t},r.createElement(u.rU,{to:"/tags/"+l()(e.fieldValue)}," "+e.fieldValue+" ("+e.totalCount+" posts)"))})))}}}]);
+//# sourceMappingURL=component---src-pages-tags-tsx-213af1a8deca39812a26.js.map
