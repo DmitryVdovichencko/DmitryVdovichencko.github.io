@@ -2,10 +2,12 @@ import * as React from "react";
 import { PageProps } from "gatsby";
 import Layout from "../components/layout/";
 import developer from "./assets/about/developer.svg";
+import SEO from "../components/Seo";
 
 const AboutPage: React.FC<PageProps> = () => {
   return (
     <Layout>
+			<SEO title="About | Dimetrio "/>
       <main className="flex md:flex-row flex-col">
         <img width="150px" src={developer}></img>
         <article className="md:pl-6 pl-none">

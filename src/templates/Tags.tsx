@@ -4,6 +4,7 @@ import Layout from "../components/layout"
 import { Link, graphql } from "gatsby"
 import PostDate from "../components/ui/PostDate"
 import Tag from "../components/ui/Tag"
+import SEO from "../components/Seo"
 
 const Tags = ({ pageContext, data }) => {
   const { tag } = pageContext
@@ -14,6 +15,7 @@ const Tags = ({ pageContext, data }) => {
 	const isTitleCyrillic = (title) => /[aА-яЯ]/gm.test(title);
   return (
     <Layout>
+			<SEO title="Article Tags | Dimetrio"/>
 			<div className="flex flex-row content-center text-gray-500" >
 				<span className="my-none vertical-middle">{tagHeader}</span>
 			</div>

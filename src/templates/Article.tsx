@@ -2,17 +2,19 @@ import * as React from "react";
 import { graphql } from "gatsby";
 import Layout from "../components/layout/";
 import { MDXRenderer } from "gatsby-plugin-mdx";
+import SEO from "../components/Seo";
 
 const Article = ({
   data: {
     mdx: {
-      frontmatter: { embeddedImagesRemote, embeddedImagesLocal },
+      frontmatter: { embeddedImagesRemote, embeddedImagesLocal, title },
       body,
     },
   },
 }) => {
   return (
     <Layout>
+			<SEO title={title} />
       <article>
         <MDXRenderer
           localImages={embeddedImagesLocal}

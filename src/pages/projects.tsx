@@ -12,6 +12,7 @@ import {
 import { projects } from "../content/projects/projects";
 import LinkButton from "../components/ui/LinkButton";
 import { IGatsbyImageData } from "gatsby-plugin-image";
+import SEO from "../components/Seo";
 interface ImageData {
   fixed: {
     originalName: string;
@@ -31,6 +32,7 @@ const ProjectsPage: React.FC<ProjectsData> = (props) => {
   const { data } = props;
   return (
     <Layout>
+			<SEO title="Projects | Dimetrio" />
       {projects.map(
         ({ title, description, tags, cover, srcUrl, demoUrl }, index) => {
           const image = data?.allImageSharp?.nodes?.filter(

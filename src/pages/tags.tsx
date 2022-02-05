@@ -2,6 +2,7 @@ import * as React from "react";
 import { PageProps, graphql, Link } from "gatsby";
 import _ from "lodash";
 import Layout from "../components/layout/";
+import SEO from "../components/Seo";
 
 // const isTitleCyrillic = (title) => /[aА-яЯ]/gm.test(title);
 
@@ -16,6 +17,7 @@ const TagsPage = ({
 }): React.ReactElement => {
   return (
     <Layout>
+			<SEO />
       {group.map((tag, i) => (
         <div key={i}>
           <Link

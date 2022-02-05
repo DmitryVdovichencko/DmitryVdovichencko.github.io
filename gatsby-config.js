@@ -1,7 +1,12 @@
 module.exports = {
   siteMetadata: {
-    siteUrl: "https://www.yourdomain.tld",
-    title: "dimetrio-dev",
+    title: "dimetrio.codes",
+    titleTemplate: "%s",
+    description:
+      "Hogwarts Potions master, Head of Slytherin house and former Death Eater.",
+    url: "https://dimetrio.codes", // No trailing slash allowed!
+    image: "/snape.jpg", // Path to the image placed in the 'static' folder, in the project's root directory.
+    twitterUsername: "@dimetrio89",
   },
   plugins: [
     "gatsby-plugin-image",
@@ -131,5 +136,17 @@ module.exports = {
         path: `./src/content/articles/`,
       },
     },
+		{
+      resolve: 'gatsby-plugin-manifest',
+      options: {
+        name: "dimetrio.codes",
+        short_name: "dimetrio.codes",
+        start_url: '/',
+        background_color: "#fff",
+        theme_color: "#fff",
+        display: 'standalone',
+        icon: 'src/images/icon.png',
+      },
+		}
   ],
 };

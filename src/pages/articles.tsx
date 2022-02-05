@@ -7,6 +7,7 @@ import Tag from "../components/ui/Tag";
 import { getImage, GatsbyImage } from "gatsby-plugin-image";
 import PostDate from "../components/ui/PostDate";
 import { Card, CardContent, CardDescription, CardHeader, CardImage } from "../components/ui/Card"
+import SEO from "../components/Seo";
 const isTitleCyrillic = (title:string) => /[aА-яЯ]/gm.test(title);
 
 interface BlogProps extends PageProps {
@@ -17,6 +18,7 @@ const BlogPage = (props: BlogProps): React.ReactElement => {
   const { data } = props;
   return (
     <Layout>
+			<SEO title="Articles | Dimetrio" />
       {data.allMdx.edges.map(({ node }, index) => (
 				<Card key={`${node.fields.slug}_${index}`} linkTo={node.fields.slug}>
 					<CardImage title={node.frontmatter.title} data={node.frontmatter.cover} />
