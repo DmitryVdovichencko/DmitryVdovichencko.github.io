@@ -50,30 +50,4 @@ const BlogPage = (props: BlogProps): React.ReactElement => {
 };
 
 export default BlogPage;
-export const query = graphql`
-  query {
-    allMdx(sort: { fields: [frontmatter___date], order: DESC }) {
-      totalCount
-      edges {
-        node {
-          id
-          frontmatter {
-            title
-            cover {
-              childImageSharp {
-                gatsbyImageData(layout: FULL_WIDTH, sizes: "300px")
-              }
-            }
-            dateRu: date(formatString: "DD MMMM, YYYY", locale: "ru")
-            dateEn: date(formatString: "DD MMMM, YYYY", locale: "en")
-            tags
-          }
-          fields {
-            slug
-          }
-          excerpt
-        }
-      }
-    }
-  }
-`;
+
