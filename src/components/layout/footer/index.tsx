@@ -4,33 +4,22 @@ import {
   AiOutlineTwitter,
   AiFillLinkedin,
 } from "react-icons/ai";
-import {
-	FaTelegramPlane
-} from "react-icons/fa";
+import { FaTelegramPlane } from "react-icons/fa";
 const Footer: React.FC = () => {
   return (
-    <footer className="flex flex-row flex-wrap w-full justify-center items-end p-4">
-			<div className="mx-2">
+    <footer className="flex flex-row gap-2 flex-wrap w-full justify-center items-end p-4">
       <a href="https://github.com/DmitryVdovichencko">
         <AiOutlineGithub size="1.5em" />{" "}
       </a>
-			</div>
-			<div className="mx-2">
       <a href="https://twitter.com/Dimetrio89">
         <AiOutlineTwitter size="1.5em" />
       </a>
-			</div>
-			<div className="mx-2">
       <a href="https://twitter.com/Dimetrio89">
         <AiFillLinkedin size="1.5em" />
       </a>
-			</div>
-			<div className="mx-2">
       <a href="https://t.me/Dmitry_Vdovichenko">
         <FaTelegramPlane size="1.5em" />
       </a>
-			</div>
-			
     </footer>
   );
 };

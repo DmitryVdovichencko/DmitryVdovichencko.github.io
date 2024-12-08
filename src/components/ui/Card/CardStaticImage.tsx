@@ -16,7 +16,7 @@ const CardStaticImage = ({ title, src }: CardStaticImageProps): React.ReactEleme
         alt={title}
 				src={src}
 				placeholder="blurred"
-        className="absolute rounded-t-lg md:rounded-t-none md:rounded-l-lg inset-0 w-full h-full object-cover mt-0 m-none"
+        className="absolute rounded-t-lg md:rounded-r-none md:rounded-l-lg inset-0 w-full h-full object-cover mt-0 m-none"
       />
     </div>
   );

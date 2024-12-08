@@ -3,6 +3,7 @@ import { graphql } from "gatsby";
 import Layout from "../components/layout/";
 import { MDXRenderer } from "gatsby-plugin-mdx";
 import SEO from "../components/Seo";
+import { Comments } from "../components/Comment";
 
 const Article = ({
   data: {
@@ -22,6 +23,7 @@ const Article = ({
         >
           {body}
         </MDXRenderer>
+				<Comments />
       </article>
     </Layout>
   );

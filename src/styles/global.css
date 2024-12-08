@@ -9,3 +9,7 @@ html, body{
 @layer base {
 
 }
+
+.gatsby-highlight {
+	font-size: clamp(0.625rem, 0.3864rem + 1.0909vw, 1rem);
+}
