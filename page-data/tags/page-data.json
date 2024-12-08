@@ -1,5 +1,5 @@
 {
     "componentChunkName": "component---src-pages-tags-tsx",
     "path": "/tags/",
-    "result": {"data":{"allMdx":{"group":[{"fieldValue":"JavaScript","totalCount":4},{"fieldValue":"Russian Translation","totalCount":4},{"fieldValue":"TypeScript","totalCount":1}]}},"pageContext":{}},
+    "result": {"data":{"allMdx":{"group":[{"fieldValue":"JavaScript","totalCount":4},{"fieldValue":"RabbitMQ","totalCount":1},{"fieldValue":"Russian Translation","totalCount":5},{"fieldValue":"TypeScript","totalCount":1}]}},"pageContext":{}},
     "staticQueryHashes": ["4202924991"]}

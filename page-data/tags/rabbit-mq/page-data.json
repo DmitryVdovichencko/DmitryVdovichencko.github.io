@@ -1,0 +1,5 @@
+{
+    "componentChunkName": "component---src-templates-tags-tsx",
+    "path": "/tags/rabbit-mq/",
+    "result": {"data":{"allMdx":{"totalCount":1,"edges":[{"node":{"fields":{"slug":"/rabbitMqConspect/rabbitMqConspect/"},"frontmatter":{"title":"RabbitMq основы","dateRu":"24 ноября, 2024","dateEn":"24 November, 2024","tags":["RabbitMQ","Russian Translation"]},"excerpt":"RabbitMQ. Начало. Обзор протокола AMQP RabbitMQ реализует стандартный AMQP (Advanced Message Queuing Protocol) протокол. Дополнительно…"}}]}},"pageContext":{"tag":"RabbitMQ"}},
+    "staticQueryHashes": ["4202924991"]}
